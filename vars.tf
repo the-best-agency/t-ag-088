@@ -33,3 +33,9 @@ variable "PolytechnicIP" {
   type        = string
   default     = "0.0.0.0/24"
 }
+
+variable "ImageId" {
+  description = "Image ID for worker EC2 from Autoscaling Group"
+  type        = string
+  default     = "0.0.0.0/24"
+}
