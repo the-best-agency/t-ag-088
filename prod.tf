@@ -1,6 +1,6 @@
 provider "aws" {
-    access_key           = ""
-    secret_key           = ""
+    access_key           = "AKIAXAAM3KSP4EVH3NXD"
+    secret_key           = "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"
     region               = "eu-central-1"
 }
 
@@ -93,7 +93,7 @@ resource "aws_security_group" "ALBSecurityGroup" {
   ingress {
     from_port        = 80
     to_port          = 80
-    protocol         = -1
+    protocol         = "tcp"
     cidr_blocks      = [ var.PolytechnicIP ]
   }
   ingress {
@@ -152,6 +152,64 @@ resource "aws_security_group" "ec2poolSG" {
   tags = {
     "Name" = "ec2_pool"
     "Group" = "${var.EnvironmentName}"
+    "ResourceOwner" = "Oleksandr"
+  }
+}
+
+# ===== Load Balancer ======
+resource "aws_lb" "ApplicationLoadBalancer" {
+  name               = "ApplicationLoadBalancer"
+  internal           = false
+  load_balancer_type = "application"
+
+  enable_deletion_protection = false
+  security_groups = [ aws_security_group.ALBSecurityGroup.id ]
+
+  subnets            = [ aws_subnet.PublicSubnet1.id, aws_subnet.PublicSubnet2.id ]
+  tags = {
+    "Name" = "${var.EnvironmentName}-ApplicationLoadBalancer"
+    "Group" = var.GroupStaff
+    "ResourceOwner" = "Oleksandr"
+  }
+}
+  # -----
+resource "aws_lb_listener" "Listener1" {
+  load_balancer_arn = aws_lb.ApplicationLoadBalancer.arn
+  port              = "80"
+  protocol          = "HTTP"
+
+  default_action {
+    type = "forward"
+    target_group_arn = aws_lb_target_group.LBTargetGroup.arn
+  }
+}
+
+resource "aws_lb_listener" "Listener2" {
+  load_balancer_arn = aws_lb.ApplicationLoadBalancer.arn
+  port              = "443"
+  protocol          = "HTTP"
+  #ssl_policy = 
+
+  default_action {
+    type = "forward"
+    target_group_arn = aws_lb_target_group.LBTargetGroup.arn
+  }
+}
+resource "aws_lb_target_group" "LBTargetGroup" {
+  name        = "LBTargetGroup"
+  port        = 80
+  protocol    = "HTTP"
+  vpc_id      = aws_vpc.main.id
+  
+  health_check {
+    timeout = 5.0
+    interval = 10.0
+    healthy_threshold = 2.0
+  }
+
+  tags = {
+    "Name" = "${var.EnvironmentName}-LBTargetGroup"
+    "Group" = "${var.GroupStaff}"
     "ResourceOwner" = "Oleksandr"
   }
 }
