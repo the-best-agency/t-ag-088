@@ -46,6 +46,16 @@ resource "aws_autoscaling_policy" "myALBRequestCountPolicy" {
 
 }
 
+# ======== Key pair =======
+resource "tls_private_key" "simplekeypair" {
+  algorithm = "RSA"
+  rsa_bits = 2048
+}
+
+resource "aws_key_pair" "ghost_ec2_pool_tf" {
+  key_name   = "simplekeypair"
+  public_key = tls_private_key.simplekeypair.public_key_openssh
+}
 
   # ================== Launch Template =================
 resource "aws_launch_template" "LaunchTemplate" {
@@ -70,9 +80,9 @@ data "template_file" "lt_asg" {
   #!/bin/bash -xe
   sudo yum update -y
   
-  export AWS_ACCESS_KEY_ID=${var.AccAccessKeyID}
-  export AWS_SECRET_ACCESS_KEY=${var.SecretAccAccessKeyID}
-  export AWS_DEFAULT_REGION=${var.AccDefaultRegion}
+  export AWS_ACCESS_KEY_ID=#
+  export AWS_SECRET_ACCESS_KEY=#
+  export AWS_DEFAULT_REGION=#
   
   # Install php
   sudo amazon-linux-extras install php8.0
@@ -99,15 +109,14 @@ data "template_file" "lt_asg" {
   aws s3 cp --recursive s3://sanpaolo .
   mkdir inc && cd $_
   >dbinfo.inc
-  printf "<?php\n\ndefine('DB_SERVER', ${"link"});\ndefine('DB_USERNAME', ${var.DBUser});\ndefine('DB_PASSWORD', ${var.DBPassword});\ndefine('DB_DATABASE', ${"datadb"});\n\n?>\n" > dbinfo.inc
   EOF
   vars = {
-    DBInstanceEndpoint = aws_db_instance.SQLDatabase.endpoint
-    DBUsername = var.DBUser
-    DBPassword = var.DBPassword
+    #DBInstanceEndpoint = 
+    #DBUsername = var.DBUser
+    #DBPassword = var.DBPassword
     DBDatabase = "datadb"
-    AccAccessKeyID = var.AccAccessKeyID
-    AccSecretAccessKeyID = var.SecretAccAccessKeyID
-    AccDefaultRegion = var.AccDefaultRegion
+    #AccAccessKeyID = var.AccAccessKeyID
+    #AccSecretAccessKeyID = var.SecretAccAccessKeyID
+    #AccDefaultRegion = var.AccDefaultRegion
   }
 }
