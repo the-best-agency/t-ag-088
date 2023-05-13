@@ -1,7 +1,7 @@
 provider "aws" {
-    access_key           = ""
-    secret_key           = ""
-    region               = "eu-central-1"
+  #access_key           = ""
+  #secret_key           = ""
+  region               = "eu-central-1"
 }
 
 # ========== VPC ==========
@@ -168,7 +168,6 @@ resource "aws_lb" "ApplicationLoadBalancer" {
   subnets            = [ aws_subnet.PublicSubnet1.id, aws_subnet.PublicSubnet2.id ]
   tags = {
     "Name" = "${var.EnvironmentName}-ApplicationLoadBalancer"
-    "Group" = var.GroupStaff
     "ResourceOwner" = "Oleksandr"
   }
 }
@@ -209,10 +208,14 @@ resource "aws_lb_target_group" "LBTargetGroup" {
 
   tags = {
     "Name" = "${var.EnvironmentName}-LBTargetGroup"
-    "Group" = "${var.GroupStaff}"
     "ResourceOwner" = "Oleksandr"
   }
 }
+
+
+
+
+
 
 
 
