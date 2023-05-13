@@ -1,9 +1,10 @@
 resource "aws_autoscaling_group" "ASG" {
-  vpc_zone_identifier = [aws_subnet.PublicSubnet1.id]
+  vpc_zone_identifier = [aws_subnet.PublicSubnet1.id, aws_subnet.PublicSubnet2.id]
 
-  desired_capacity   = 1
-  max_size           = 3
-  min_size           = 1
+  desired_capacity    = 1
+  max_size            = 2
+  min_size            = 1
+
 
   target_group_arns = [ aws_lb_target_group.LBTargetGroup.arn ]
   launch_template {
@@ -29,6 +30,7 @@ resource "aws_autoscaling_group" "ASG" {
 
 
 }
+
 
   # ================== Scaling Policy =================
 resource "aws_autoscaling_policy" "myALBRequestCountPolicy" {
@@ -70,6 +72,7 @@ resource "aws_launch_template" "LaunchTemplate" {
     device_index = 0
   }
 
+
   user_data = "${base64encode(data.template_file.lt_asg.rendered)}"
 
 
@@ -77,46 +80,32 @@ resource "aws_launch_template" "LaunchTemplate" {
 
 data "template_file" "lt_asg" {
   template = <<EOF
-  #!/bin/bash -xe
+  #!/bin/bash
+
   sudo yum update -y
-  
-  export AWS_ACCESS_KEY_ID=#
-  export AWS_SECRET_ACCESS_KEY=#
-  export AWS_DEFAULT_REGION=#
-  
-  # Install php
-  sudo amazon-linux-extras install php8.0
-  # MySQL Installation
-  sudo wget https://dev.mysql.com/get/mysql80-community-release-el7-3.noarch.rpm
-  sudo rpm -Uvh mysql80-community-release-el7-3.noarch.rpm
-  sudo rpm --import https://repo.mysql.com/RPM-GPG-KEY-mysql-2022
-  sudo yum --enablerepo=mysql80-community install -y mysql-community-server
-  sudo systemctl start mysqld
-  
-  sudo yum install -y httpd
-  sudo systemctl start httpd
-  sudo systemctl enable httpd
-  sudo service httpd start
-  sudo chkconfig httpd on
-  sudo usermod -a -G apache ec2-user
-  
-  sudo chown -R ec2-user:apache /var/www
-  sudo chmod 2775 /var/www
-  find /var/www -type d -exec sudo chmod 2775 {} \;
-  find /var/www -type f -exec sudo chmod 0664 {} \;
+  sudo yum install -y httpd php git
   
   cd /var/www/html
-  aws s3 cp --recursive s3://sanpaolo .
-  mkdir inc && cd $_
-  >dbinfo.inc
-  EOF
+  sudo mkdir -p .ssh
+  sudo chmod 700 .ssh
+  sudo echo "${PrivateSSHKey}" > .ssh/id_rsa
+  sudo chmod 400 .ssh/id_rsa
+
+  sudo ssh-keyscan github.com >> .ssh/known_hosts
+  sudo chown -R ec2-user:ec2-user .ssh
+  cd /home/ec2-user
+  sudo git clone ${SourceCodeMLink}
+  cd YOUR_PRIVATE_REPO
+
+  sudo mv about.php book.php home.php package.php /var/www/html/
+  sudo chown -R apache:apache /var/www/html
+  sudo chmod -R 755 /var/www/html
+
+  sudo systemctl start httpd
+  sudo systemctl enable httpd
+    EOF
   vars = {
-    #DBInstanceEndpoint = 
-    #DBUsername = var.DBUser
-    #DBPassword = var.DBPassword
-    DBDatabase = "datadb"
-    #AccAccessKeyID = var.AccAccessKeyID
-    #AccSecretAccessKeyID = var.SecretAccAccessKeyID
-    #AccDefaultRegion = var.AccDefaultRegion
+    PrivateSSHKey = var.PrivateSSHKey
+    SourceCodeMLink = var.SourceCodeMLink
   }
 }
