@@ -37,5 +37,11 @@ variable "PolytechnicIP" {
 variable "ImageId" {
   description = "Image ID for worker EC2 from Autoscaling Group"
   type        = string
-  default     = "0.0.0.0/24"
+  default     = "ami-03aefa83246f44ef2"
+}
+
+variable "SourceCodeMLink" {
+  description = "Link to Github/Gitlab/BitBucket"
+  type        = string
+  default     = "git@github.com:the-best-agency/t-ag-088.git"
 }
