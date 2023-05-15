@@ -98,12 +98,13 @@ data "template_file" "lt_asg" {
   cd YOUR_PRIVATE_REPO
 
   sudo mv about.php book.php home.php package.php /var/www/html/
-  sudo chown -R apache:apache /var/www/html
-  sudo chmod -R 755 /var/www/html
+  sudo mv images/ /var/www/html/
+  sudo chown -R apache:apache /var/www/html /var/www/html/images
+  sudo chmod -R 755 /var/www/html /var/www/html/images
 
   sudo systemctl start httpd
   sudo systemctl enable httpd
-    EOF
+  EOF
   vars = {
     PrivateSSHKey = var.PrivateSSHKey
     SourceCodeMLink = var.SourceCodeMLink
